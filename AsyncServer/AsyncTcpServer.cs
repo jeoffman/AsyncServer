@@ -14,7 +14,8 @@ namespace AsyncServer
         public bool KeepRunning { get; set; }
         TcpListener Listener { get; set; }
 
-        int ArbitraryPacketLength = 1024 * 12;
+        int ArbitraryPacketLength = 1024 * 12;  //12K buffer is several typical MTUs - maybe you
+                                                //  need more bytes for your TCP messages?
 
         public async Task StartListening(IPAddress localAddress, int port)
         {
@@ -66,6 +67,8 @@ namespace AsyncServer
         {
         }
 
+        /// <summary>Something has connected to our server = spin up a new async task loop for 
+        /// that client</summary>
         public async Task Accept(AsyncTcpConnection connection)
         {
             try
@@ -86,8 +89,7 @@ namespace AsyncServer
                             keepProcessingClient = false;
                         }
                         else
-                        {
-                            //do processing...
+                        {   //process the bytes sent by the client
                             await connection.ProcessRead(data.Take(bytesRead).ToArray());
                         }
                     }
@@ -99,6 +101,12 @@ namespace AsyncServer
             }
 
             OnClientClosed(connection);
+        }
+
+        public int GetPort()
+        {
+            if (Listener == null) throw new InvalidOperationException("Server is not listening yet, StartListening first");
+            return ((IPEndPoint)Listener.LocalEndpoint).Port;
         }
 
         public async Task Send(TcpClient client, string text)
@@ -119,7 +127,6 @@ namespace AsyncServer
     {
         object _clientListLock = new object();
         List<AsyncTcpConnection> _connections = new List<AsyncTcpConnection>();
-
 
         public static TClient CreateClient(TcpClient client, AsyncTcpServer server)
         {   //what I really want is a generic constructor with parameters...

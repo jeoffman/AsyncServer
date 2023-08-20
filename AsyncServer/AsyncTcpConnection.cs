@@ -1,9 +1,9 @@
-﻿using System.Dynamic;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace AsyncServer
 {
+    /// <summary>This represents each connection to your AsyncTcpServer. Bytes arrive and you ProcessRead</summary>
     public abstract class AsyncTcpConnection
     {
         public TcpClient TcpClient { get; private set; }
